@@ -1,0 +1,11 @@
+syntax: glob
+*.suo
+*\bin\*
+*\obj\*
+TestResults\*
+_ReSharper.*
+*.ReSharper.*
+*.user
+access.log
+error.log
+*.DotSettings

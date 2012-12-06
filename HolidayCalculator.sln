@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HolidaySampleApp", "HolidaySampleApp\HolidaySampleApp.csproj", "{4A08D912-D7F8-49E6-B749-8BC732D95472}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E4B68FC7-650F-40BD-9CE0-BFCAE04464E4} = {E4B68FC7-650F-40BD-9CE0-BFCAE04464E4}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Holidays", "..\Holidays\Holidays.csproj", "{E4B68FC7-650F-40BD-9CE0-BFCAE04464E4}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{4A08D912-D7F8-49E6-B749-8BC732D95472}.Debug.ActiveCfg = Release|.NET
+		{4A08D912-D7F8-49E6-B749-8BC732D95472}.Debug.Build.0 = Release|.NET
+		{4A08D912-D7F8-49E6-B749-8BC732D95472}.Release.ActiveCfg = Release|.NET
+		{4A08D912-D7F8-49E6-B749-8BC732D95472}.Release.Build.0 = Release|.NET
+		{E4B68FC7-650F-40BD-9CE0-BFCAE04464E4}.Debug.ActiveCfg = Release|.NET
+		{E4B68FC7-650F-40BD-9CE0-BFCAE04464E4}.Debug.Build.0 = Release|.NET
+		{E4B68FC7-650F-40BD-9CE0-BFCAE04464E4}.Release.ActiveCfg = Release|.NET
+		{E4B68FC7-650F-40BD-9CE0-BFCAE04464E4}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
