@@ -2,8 +2,7 @@ using System;
 using System.Collections;
 using System.Xml;
 
-
-namespace JayMuntzCom
+namespace Holidays
 {
 	/// <summary>
 	/// Summary description for HolidayCalculator.
@@ -16,20 +15,20 @@ namespace JayMuntzCom
 		/// </summary>	
 		/// <param name="startDate">The starting date for returning holidays.  All holidays for one year after this date are returned.</param>
 		/// <param name="xmlPath">The path to the XML file that contains the holiday definitions.</param>
-		public HolidayCalculator(System.DateTime startDate, string xmlPath)
+		public HolidayCalculator(DateTime startDate, string xmlPath)
 		{
-			this.startingDate = startDate;
-			orderedHolidays = new ArrayList();
-			xHolidays = new XmlDocument();
-			xHolidays.Load(xmlPath);
-			this.processXML();
+			_startingDate = startDate;
+			_orderedHolidays = new ArrayList();
+			_xHolidays = new XmlDocument();
+			_xHolidays.Load(xmlPath);
+			ProcessXML();
 		}
 		#endregion
 
 		#region Private Properties
-		private ArrayList orderedHolidays;
-		private XmlDocument xHolidays;
-		private DateTime startingDate;
+		private readonly ArrayList _orderedHolidays;
+		private readonly XmlDocument _xHolidays;
+		private DateTime _startingDate;
 		#endregion
 
 		#region Public Properties
@@ -39,7 +38,7 @@ namespace JayMuntzCom
 		/// </summary>
 		public ArrayList OrderedHolidays 
 		{
-			get { return this.orderedHolidays; }
+			get { return _orderedHolidays; }
 		}
 		#endregion
 
@@ -49,54 +48,56 @@ namespace JayMuntzCom
 		/// <summary>
 		/// Loops through the holidays defined in the XML configuration file, and adds the next occurance into the OrderHolidays collection if it occurs within one year.
 		/// </summary>
-		private void processXML()
+		private void ProcessXML()
 		{
-			foreach (XmlNode n in xHolidays.SelectNodes("/Holidays/Holiday"))
-			{
-				Holiday h = this.processNode(n);
-				if (h.Date.Year > 1)
-					this.orderedHolidays.Add(h);
-			}
-			orderedHolidays.Sort();
+		    var holidaysNodes = _xHolidays.SelectNodes("/Holidays/Holiday");
+		    if (holidaysNodes != null)
+		        foreach (XmlNode n in holidaysNodes)
+		        {
+		            Holiday h = ProcessNode(n);
+		            if (h.Date.Year > 1)
+		                _orderedHolidays.Add(h);
+		        }
+		    _orderedHolidays.Sort();
 		}
 
 
-		/// <summary>
+	    /// <summary>
 		/// Processes a Holiday node from the XML configuration file.
 		/// </summary>
 		/// <param name="n">The Holdiay node to process.</param>
 		/// <returns></returns>
-		private Holiday processNode(XmlNode n)
+		private Holiday ProcessNode(XmlNode n)
 		{
 			Holiday h = new Holiday();
-			h.Name = n.Attributes["name"].Value.ToString();
+			h.Name = n.Attributes["name"].Value;
 			ArrayList childNodes = new ArrayList();
 			foreach (XmlNode o in n.ChildNodes)
 			{
-				childNodes.Add(o.Name.ToString());
+				childNodes.Add(o.Name);
 			}
 			if (childNodes.Contains("WeekOfMonth"))
 			{
-				int m = Int32.Parse(n.SelectSingleNode("./Month").InnerXml.ToString());
-				int w = Int32.Parse(n.SelectSingleNode("./WeekOfMonth").InnerXml.ToString());
-				int wd = Int32.Parse(n.SelectSingleNode("./DayOfWeek").InnerXml.ToString());
-				h.Date = this.getDateByMonthWeekWeekday(m,w,wd,this.startingDate);
+				int m = Int32.Parse(n.SelectSingleNode("./Month").InnerXml);
+				int w = Int32.Parse(n.SelectSingleNode("./WeekOfMonth").InnerXml);
+				int wd = Int32.Parse(n.SelectSingleNode("./DayOfWeek").InnerXml);
+				h.Date = GetDateByMonthWeekWeekday(m,w,wd,_startingDate);
 			}
 			else if (childNodes.Contains("DayOfWeekOnOrAfter"))
 			{
-				int dow = Int32.Parse(n.SelectSingleNode("./DayOfWeekOnOrAfter/DayOfWeek").InnerXml.ToString());
+				int dow = Int32.Parse(n.SelectSingleNode("./DayOfWeekOnOrAfter/DayOfWeek").InnerXml);
 				if (dow > 6 || dow < 0)
 					throw new Exception("DOW is greater than 6");
-				int m = Int32.Parse(n.SelectSingleNode("./DayOfWeekOnOrAfter/Month").InnerXml.ToString());
-				int d = Int32.Parse(n.SelectSingleNode("./DayOfWeekOnOrAfter/Day").InnerXml.ToString());
-				h.Date = this.getDateByWeekdayOnOrAfter(dow,m,d, this.startingDate);
+				int m = Int32.Parse(n.SelectSingleNode("./DayOfWeekOnOrAfter/Month").InnerXml);
+				int d = Int32.Parse(n.SelectSingleNode("./DayOfWeekOnOrAfter/Day").InnerXml);
+				h.Date = GetDateByWeekdayOnOrAfter(dow,m,d, _startingDate);
 			}
 			else if (childNodes.Contains("WeekdayOnOrAfter"))
 			{
-				int m = Int32.Parse(n.SelectSingleNode("./WeekdayOnOrAfter/Month").InnerXml.ToString());
-				int d = Int32.Parse(n.SelectSingleNode("./WeekdayOnOrAfter/Day").InnerXml.ToString());
-				DateTime dt = new DateTime(this.startingDate.Year, m, d);
-				if (dt < this.startingDate)
+				int m = Int32.Parse(n.SelectSingleNode("./WeekdayOnOrAfter/Month").InnerXml);
+				int d = Int32.Parse(n.SelectSingleNode("./WeekdayOnOrAfter/Day").InnerXml);
+				DateTime dt = new DateTime(_startingDate.Year, m, d);
+				if (dt < _startingDate)
 					dt = dt.AddYears(1);
 				while(dt.DayOfWeek.Equals(DayOfWeek.Saturday) || dt.DayOfWeek.Equals(DayOfWeek.Sunday))
 				{
@@ -106,9 +107,9 @@ namespace JayMuntzCom
 			}
 			else if (childNodes.Contains("LastFullWeekOfMonth"))
 			{
-				int m = Int32.Parse(n.SelectSingleNode("./LastFullWeekOfMonth/Month").InnerXml.ToString());
-				int weekday = Int32.Parse(n.SelectSingleNode("./LastFullWeekOfMonth/DayOfWeek").InnerXml.ToString());
-				DateTime dt = this.getDateByMonthWeekWeekday(m,5,weekday, this.startingDate);
+				int m = Int32.Parse(n.SelectSingleNode("./LastFullWeekOfMonth/Month").InnerXml);
+				int weekday = Int32.Parse(n.SelectSingleNode("./LastFullWeekOfMonth/DayOfWeek").InnerXml);
+				DateTime dt = GetDateByMonthWeekWeekday(m,5,weekday, _startingDate);
 
 				if (dt.AddDays(6-weekday).Month == m)
 					h.Date = dt;
@@ -117,30 +118,30 @@ namespace JayMuntzCom
 			}
 			else if (childNodes.Contains("DaysAfterHoliday"))
 			{
-				XmlNode basis = xHolidays.SelectSingleNode("/Holidays/Holiday[@name='" + n.SelectSingleNode("./DaysAfterHoliday").Attributes["Holiday"].Value.ToString() + "']");
-				Holiday bHoliday = this.processNode(basis);
-				int days = Int32.Parse(n.SelectSingleNode("./DaysAfterHoliday/Days").InnerXml.ToString());
+				XmlNode basis = _xHolidays.SelectSingleNode("/Holidays/Holiday[@name='" + n.SelectSingleNode("./DaysAfterHoliday").Attributes["Holiday"].Value + "']");
+				Holiday bHoliday = ProcessNode(basis);
+				int days = Int32.Parse(n.SelectSingleNode("./DaysAfterHoliday/Days").InnerXml);
 				h.Date = bHoliday.Date.AddDays(days);
 			}
 			else if (childNodes.Contains("Easter"))
 			{
-				h.Date = this.easter();
+				h.Date = Easter();
 			}
 			else
 			{
 				if (childNodes.Contains("Month") && childNodes.Contains("Day"))
 				{
-					int m = Int32.Parse(n.SelectSingleNode("./Month").InnerXml.ToString());
-					int d = Int32.Parse(n.SelectSingleNode("./Day").InnerXml.ToString());
-					DateTime dt = new DateTime(this.startingDate.Year, m, d);
-					if (dt < this.startingDate)
+					int m = Int32.Parse(n.SelectSingleNode("./Month").InnerXml);
+					int d = Int32.Parse(n.SelectSingleNode("./Day").InnerXml);
+					DateTime dt = new DateTime(_startingDate.Year, m, d);
+					if (dt < _startingDate)
 					{
 						dt = dt.AddYears(1);
 					}
 					if (childNodes.Contains("EveryXYears"))
 					{
-						int yearMult = Int32.Parse(n.SelectSingleNode("./EveryXYears").InnerXml.ToString());
-						int startYear = Int32.Parse(n.SelectSingleNode("./StartYear").InnerXml.ToString());
+						int yearMult = Int32.Parse(n.SelectSingleNode("./EveryXYears").InnerXml);
+						int startYear = Int32.Parse(n.SelectSingleNode("./StartYear").InnerXml);
 						if (((dt.Year - startYear) % yearMult) == 0)
 						{
 							h.Date = dt;
@@ -160,13 +161,13 @@ namespace JayMuntzCom
 		/// Determines the next occurance of Easter (western Christian).
 		/// </summary>
 		/// <returns></returns>
-		private DateTime easter()
+		private DateTime Easter()
 		{
-			DateTime workDate = this.getFirstDayOfMonth(this.startingDate);
+			DateTime workDate = getFirstDayOfMonth(_startingDate);
 			int y = workDate.Year;
 			if (workDate.Month > 4)
 				y = y+1;
-			return this.easter(y);
+			return Easter(y);
 		}
 
 
@@ -175,7 +176,7 @@ namespace JayMuntzCom
 		/// </summary>
 		/// <param name="y"></param>
 		/// <returns></returns>
-		private DateTime easter(int y)
+		private DateTime Easter(int y)
 		{
 			int a=y%19;
 			int b=y/100;
@@ -193,22 +194,23 @@ namespace JayMuntzCom
 			int  p=(h+l-7*m+114)%31;
 			int easterDay=p+1;
 			DateTime est = new DateTime(y,easterMonth,easterDay);
-			if (est < this.startingDate)
-				return this.easter(y+1);
+			if (est < _startingDate)
+				return Easter(y+1);
 			else
 				return new DateTime(y,easterMonth,easterDay);
 		}
 
-		/// <summary>
-		/// Gets the next occurance of a weekday after a given month and day in the year after StartDate.
-		/// </summary>
-		/// <param name="weekday">The day of the week (0=Sunday).</param>
-		/// <param name="m">The Month</param>
-		/// <param name="d">Day</param>
-		/// <returns></returns>
-		private DateTime getDateByWeekdayOnOrAfter(int weekday, int m, int d, DateTime startDate)
+	    /// <summary>
+	    /// Gets the next occurance of a weekday after a given month and day in the year after StartDate.
+	    /// </summary>
+	    /// <param name="weekday">The day of the week (0=Sunday).</param>
+	    /// <param name="m">The Month</param>
+	    /// <param name="d">Day</param>
+	    /// <param name="startDate"></param>
+	    /// <returns></returns>
+	    private DateTime GetDateByWeekdayOnOrAfter(int weekday, int m, int d, DateTime startDate)
 		{
-			DateTime workDate = this.getFirstDayOfMonth(startDate);
+			DateTime workDate = getFirstDayOfMonth(startDate);
 			while (workDate.Month != m)
 			{
 				workDate = workDate.AddMonths(1);
@@ -221,22 +223,23 @@ namespace JayMuntzCom
 			}
 
 			//It's possible the resulting date is before the specified starting date.  If so we'll calculate again for the next year.
-			if (workDate < this.startingDate)
-				return this.getDateByWeekdayOnOrAfter(weekday,m,d,startDate.AddYears(1));
+			if (workDate < _startingDate)
+				return GetDateByWeekdayOnOrAfter(weekday,m,d,startDate.AddYears(1));
 			else
 				return workDate;				
 		}
 
-		/// <summary>
-		/// Gets the n'th instance of a day-of-week in the given month after StartDate
-		/// </summary>
-		/// <param name="month">The month the Holiday falls on.</param>
-		/// <param name="week">The instance of weekday that the Holiday falls on (5=last instance in the month).</param>
-		/// <param name="weekday">The day of the week that the Holiday falls on.</param>
-		/// <returns></returns>
-		private DateTime getDateByMonthWeekWeekday(int month, int week, int weekday, DateTime startDate)
+	    /// <summary>
+	    /// Gets the n'th instance of a day-of-week in the given month after StartDate
+	    /// </summary>
+	    /// <param name="month">The month the Holiday falls on.</param>
+	    /// <param name="week">The instance of weekday that the Holiday falls on (5=last instance in the month).</param>
+	    /// <param name="weekday">The day of the week that the Holiday falls on.</param>
+	    /// <param name="startDate"></param>
+	    /// <returns></returns>
+	    private DateTime GetDateByMonthWeekWeekday(int month, int week, int weekday, DateTime startDate)
 		{
-			DateTime workDate = this.getFirstDayOfMonth(startDate);
+			DateTime workDate = getFirstDayOfMonth(startDate);
 			while (workDate.Month != month)
 			{
 				workDate = workDate.AddMonths(1);
@@ -263,12 +266,10 @@ namespace JayMuntzCom
 			}
 
 			//It's possible the resulting date is before the specified starting date.  If so we'll calculate again for the next year.
-			if (result >= this.startingDate)
+			if (result >= _startingDate)
 				return result;
 			else
-				return this.getDateByMonthWeekWeekday(month,week,weekday,startDate.AddYears(1));
-
-
+				return GetDateByMonthWeekWeekday(month,week,weekday,startDate.AddYears(1));
 		}
 
 		/// <summary>
@@ -285,18 +286,18 @@ namespace JayMuntzCom
 		#region Holiday Object
 		public class Holiday : IComparable
 		{
-			public System.DateTime Date;
+			public DateTime Date;
 			public string Name;
 
 			#region IComparable Members
 
 			public int CompareTo(object obj)
 			{
-				if (obj is Holiday)
-				{
-					Holiday h = (Holiday)obj;
-					return this.Date.CompareTo(h.Date);
-				}
+			    var h = obj as Holiday;
+			    if (h != null)
+			    {
+			        return Date.CompareTo(h.Date);
+			    }
 				throw new ArgumentException("Object is not a Holiday"); 
 			}
 			#endregion
